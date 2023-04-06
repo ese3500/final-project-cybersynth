@@ -1,5 +1,5 @@
 /*
- * MIDI.c
+ * MIDI.c - Library used to send all major MIDI commands through UART
  *
  * Created: 2023-04-04 4:52:28 PM
  *  Author: vicga
