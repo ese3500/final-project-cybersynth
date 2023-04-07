@@ -17,6 +17,7 @@
 ////////////////////////////////////////////////
 /*               Global Vars.                 */
 ////////////////////////////////////////////////
+// extern volatile int ADCArr[6]; // gets this array in another .c file
 volatile int ADCArr[6];
 volatile int adcInx = 0;
 
@@ -93,12 +94,4 @@ ISR(ADC_vect) {
     ADMUX &= ~(0b111);              // Clear Channel select
     adcInx = (adcInx + 1) % 6;      // Cycle to next ADC channel
     ADMUX |= adcInx;                // Change channel to next 
-}
-
-int main(void) {
-    ADC_Init();
-
-    while(1) {
-
-    }
 }
