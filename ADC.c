@@ -90,7 +90,7 @@ void ADC_Init() {
 
 ////////// ADC ISR //////////
 ISR(ADC_vect) {
-    ADCArr[(adcInx - 1) % 6] = ADC; // Take in ADC value for Channel (ADC has value for previous channel)
+    ADCArr[(adcInx + adcInx - 1) % 6] = ADC; // Take in ADC value for Channel (ADC has value for previous channel)
     ADMUX &= ~(0b111);              // Clear Channel select
     adcInx = (adcInx + 1) % 6;      // Cycle to next ADC channel
     ADMUX |= adcInx;                // Change channel to next 
