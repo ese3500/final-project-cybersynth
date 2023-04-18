@@ -9,19 +9,25 @@
 #include <stdio.h>
 #include "ADC.h"
 #include "UART.h"
+#include "ST7735.h"
+#include "LCD_GFX.h"
 
 #define F_CPU 16000000UL
 #define BAUD_RATE 9600
 #define BAUD_PRESCALER (((F_CPU / (BAUD_RATE * 16UL))) - 1)
+#define MODES 3
+#define BLOCKSIZE 3
 
-extern volatile int ADCArr[6];
+extern volatile int ADCArr[3 + BLOCKSIZE + MODES];
+extern volatile int buttonMode;
 char Values[100];
+volatile char SelectMode[50];
 
 void Initialize() {
-	UART_init(BAUD_PRESCALER);
-    ADC_Init();
-	
 	cli();
+
+	UART_init(BAUD_PRESCALER);
+    ADC_Init(SelectMode);
 	
 	// Buzzer Init
 	DDRD |= (1 << DDD5); // PIN 5 OUT
@@ -70,6 +76,9 @@ void Initialize() {
 	// Clear interrupt flags
 	TIFR1 |= (1 < ICF1);
 	TIFR1 |= (1 << OCF1A);
+
+	lcd_init();
+	LCD_setScreen(BLACK);
 	
 	sei();
 }
@@ -77,6 +86,11 @@ void Initialize() {
 
 int main(void) {
     Initialize();
+	int chX = 3;
+	int chY = 4;
+	int chZ = 5;
+	int prev = buttonMode;
+
     while(1) {
 		// set buzzer pitch/volume
 		OCR0A = .1 * ADCArr[0];
@@ -84,8 +98,16 @@ int main(void) {
 		
 		// PWM LED brightness
 		OCR1B = OCR1A * (ADCArr[1] / 1023.0);
+
+		if (prev != buttonMode) {
+			prev = buttonMode;
+			LCD_drawString(0, 0, SelectMode, WHITE, BLACK);
+		}
 		
-        sprintf(Values, "CH0: %d, CH1: %d, CH2: %d, CH3: %d, CH4: %d, CH5: %d\n", ADCArr[0], ADCArr[1], ADCArr[2], ADCArr[3], ADCArr[4], ADCArr[5]);
+		chX = 3 + (BLOCKSIZE * buttonMode);
+		chY = 4 + (BLOCKSIZE * buttonMode);
+		chZ = 5 + (BLOCKSIZE * buttonMode);
+        sprintf(Values, "CH0: %d, CH1: %d, CH2: %d, CH%d: %d, CH%d: %d, CH%d: %d\n", ADCArr[0], ADCArr[1], ADCArr[2], chX, ADCArr[chX], chY, ADCArr[chY], chZ, ADCArr[chZ]);
         UART_putstring(Values);
     }
 }

@@ -12,21 +12,37 @@
 /*                 DEFINES                    */
 ////////////////////////////////////////////////
 #define F_CPU 16000000UL
-
+#define MODES 3
+#define BLOCKSIZE 3
+#define CHANNELS 6
 
 ////////////////////////////////////////////////
 /*               Global Vars.                 */
 ////////////////////////////////////////////////
-// extern volatile int ADCArr[6]; // gets this array in another .c file
-volatile int ADCArr[6];
+// extern volatile int ADCArr[3 + (BLOCKSIZE * MODES)]; // gets this array in another .c file
+volatile int ADCArr[3 + (BLOCKSIZE * MODES)];
 volatile int adcInx = 0;
+volatile int buttonMode = 0;
+volatile int buttonPressed = 0;
+volatile char* buttonString;
 
 ////////////////////////////////////////////////
 /*               Functions                    */
 ////////////////////////////////////////////////
 
 ////////// ATMega Initialize //////////
-void ADC_Init() {
+void ADC_Init(volatile char* string) {
+    /////////// MODE SWITCHER ///////////
+    DDRB &= ~(1 << DDB4); // set pin 12 IN
+
+    buttonString = string;
+
+    // enable button press
+	PCMSK0 |= (1 << PCINT4);
+	PCICR |= (1 << PCIE0);
+	PCIFR |= (1 << PCIF0);
+
+
     /////////////////////////////////
     /* 
      *  ADC:
@@ -90,8 +106,23 @@ void ADC_Init() {
 
 ////////// ADC ISR //////////
 ISR(ADC_vect) {
-    ADCArr[(6 + adcInx - 1) % 6] = ADC; // Take in ADC value for Channel (ADC has value for previous channel)
+    // set value at array index for top three channels based on button mode
+    int arrInd = (CHANNELS + adcInx - 1) % CHANNELS;
+    if (arrInd > 2) {
+        arrInd += BLOCKSIZE * buttonMode;
+    }
+    ADCArr[arrInd] = ADC;                 // Take in ADC value for Channel (ADC has value for previous channel)
     ADMUX &= ~(0b111);              // Clear Channel select
-    adcInx = (adcInx + 1) % 6;      // Cycle to next ADC channel
+    adcInx = (adcInx + 1) % CHANNELS;      // Cycle to next ADC channel
     ADMUX |= adcInx;                // Change channel to next 
+}
+
+////////// Button Press ISR //////////
+ISR(PCINT0_vect) {
+	if (!buttonPressed) {
+		buttonMode = (buttonMode + 1) % MODES;
+        sprintf(buttonString, "Button Mode: %d", buttonMode);
+	}
+    
+	buttonPressed ^= 1;
 }
