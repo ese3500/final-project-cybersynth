@@ -20,7 +20,7 @@
 
 extern volatile int ADCArr[3 + BLOCKSIZE + MODES];
 extern volatile int buttonMode;
-char Values[100];
+char Values[150];
 volatile char SelectMode[50];
 
 void Initialize() {
@@ -48,7 +48,6 @@ void Initialize() {
 	
 	// set output compare value
 	OCR0A = 70;
-	
 	/*
 	// PWM/Buzzer Timer1
 	DDRB |= (1 << DDB2); // Set Pin 10 out
@@ -78,7 +77,7 @@ void Initialize() {
 	TIFR1 |= (1 < ICF1);
 	TIFR1 |= (1 << OCF1A);
 
-	*/
+*/
 	lcd_init();
 	LCD_setScreen(BLACK);
 	
@@ -105,11 +104,12 @@ int main(void) {
 			prev = buttonMode;
 			LCD_drawString(0, 0, SelectMode, WHITE, BLACK);
 		}
-		
+		/*
 		chX = 3 + (BLOCKSIZE * buttonMode);
 		chY = 4 + (BLOCKSIZE * buttonMode);
 		chZ = 5 + (BLOCKSIZE * buttonMode);
-        sprintf(Values, "CH0: %d, CH1: %d, CH2: %d, CH%d: %d, CH%d: %d, CH%d: %d\n", ADCArr[0], ADCArr[1], ADCArr[2], chX, ADCArr[chX], chY, ADCArr[chY], chZ, ADCArr[chZ]);
+		*/
+        sprintf(Values, "CH0: %d, CH1: %d, CH2: %d, CH3: %d, CH4: %d, CH5: %d, CH6: %d, CH7: %d, CH8: %d, CH9: %d, CH10: %d, CH11: %d\n", ADCArr[0], ADCArr[1], ADCArr[2], ADCArr[3], ADCArr[4], ADCArr[5], ADCArr[6], ADCArr[7], ADCArr[8], ADCArr[9], ADCArr[10], ADCArr[11]);
         UART_putstring(Values);
     }
 }
