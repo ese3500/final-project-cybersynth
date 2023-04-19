@@ -29,8 +29,15 @@ char val[25];
 //Values of the SoftPot and Force Resistive Sensor
 int SP_analog;
 int FSR_analog;
-int curr_note = 60;
-int note_on_flag = 0;
+
+int curr_note = 60; //Current note from 0 - 127
+int curr_press = 0; //Current polyphonic pressure from 0 - 127 (discrete val for now)
+
+int NOTE_ON = 0; //NOTE_ON flag initially off
+
+//flags used to determine if a command has been sent after a change in input has been detected
+int CMD1_SENT = 0; //noteOn
+int CMD2_SENT = 1; //noteOff
 
 //Values defining what values on the SoftPot correspond to what tones being sent
 int octave = 3; //Default C3
@@ -42,6 +49,12 @@ int quantize_scale_flag = 0; //Flag that keeps track of quantized scale mode or 
 
 int send_flag = 0;
 
+//Debug function prints ADC values
+void debug(){
+	sprintf(val, "CH0: %d, CH1: %d\n", ADCArr[0], ADCArr[1]);
+	UART_putstring(val);
+}
+
 /*
 	Initialize function
 */
@@ -50,10 +63,7 @@ void initialize(){
 	ADC_Init();
 	
 	cli();
-	
-	
-	
-	
+	//CONFIGURE TIMEERS/PINS HERE
 	sei();
 	
 }
@@ -61,16 +71,26 @@ void initialize(){
 	Reads and sets the values corresponding to the SoftPot and FSR
 */
 void readAnalaog(){
-	SP_analog = 0;
-	FSR_analog = 0;
+	SP_analog = ADCArr[0];
+	FSR_analog = ADCArr[1];
 }
 
-int processTemp(){
+int processNote(){
 	return SP_analog/85 + 60;
 }
 
-int processAnalog(){
-	return (SP_analog / 16)/(128/24) + (octave + 1)*12; //Scale down to a two octave range (24 discrete values)
+int processPressure(){
+	return (FSR_analog/100) * 100;
+}
+
+void sendPolyPressure(){
+	if(NOTE_ON){
+		int new_press = processPressure();
+		if (new_press != curr_press){
+			chanTouch(CHANNEL, new_press);
+			curr_press = new_press;
+		}
+	}
 }
 
 
@@ -81,26 +101,40 @@ int main(void)
 	
     while (1) 
     {
-		SP_analog = ADCArr[0]; //continuously read in analog values
-		int temp = processTemp(); //scale down to 60-73
+		readAnalaog(); //continuously read in analog values
 		
-		if((SP_analog < 10) && (note_on_flag == 1)){ //if note is already on but SP value suddenly reads < 10, this means user has let go of their finger, send note off
+		if(FSR_analog > 10){ //if force is being sensed, set the NOTE_ON flag to be TRUE
+			NOTE_ON = 1;
+		} else {
+			NOTE_ON = 0;
+		}
+		
+		
+		if(NOTE_ON && !CMD1_SENT){ //If a note is meant to be played and a command has not been sent
+			curr_note = processNote(); //remove temp if not necessary
+			noteOn(CHANNEL, curr_note, 60); //Send command
+			CMD1_SENT = 1; 
+		} else if (NOTE_ON && CMD1_SENT){
+			int new_note = processNote();
+			if(new_note != curr_note){ //detects slide (i.e. new note being played while force is still being pressed
+				noteOff(CHANNEL, curr_note);
+				noteOn(CHANNEL, new_note, 60);
+				curr_note = new_note;
+			} else {
+				CMD2_SENT = 0; //CMD2 (noteOff) needs to be sent
+			}
+		}
+		
+		if(!NOTE_ON && !CMD2_SENT){
 			noteOff(CHANNEL, curr_note);
-			note_on_flag = 0;
-		}
-		else if(temp != curr_note){ //else if read value differs from current note, set send_flag to be true and send the note
-			send_flag = 1;
+			CMD1_SENT = 0; //CMD1 (noteOn) now needs to be sent (next note(
+			CMD2_SENT = 1;
 		}
 		
+		//sendPolyPressure();
 		
-		if(send_flag == 1){
-			noteOff(CHANNEL, curr_note);
-			curr_note = temp;
-			noteOn(CHANNEL, curr_note, 60); 			
-			send_flag = 0;
-			note_on_flag = 1;
-
-		}
+		
+		
 		
     }
 }
