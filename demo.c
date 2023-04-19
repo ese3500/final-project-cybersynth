@@ -49,6 +49,7 @@ void Initialize() {
 	// set output compare value
 	OCR0A = 70;
 	
+	/*
 	// PWM/Buzzer Timer1
 	DDRB |= (1 << DDB2); // Set Pin 10 out
 	PORTB &= ~(1 << PORTB2); // Set Pin 10 low
@@ -77,6 +78,7 @@ void Initialize() {
 	TIFR1 |= (1 < ICF1);
 	TIFR1 |= (1 << OCF1A);
 
+	*/
 	lcd_init();
 	LCD_setScreen(BLACK);
 	
