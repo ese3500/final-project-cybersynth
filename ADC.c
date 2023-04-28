@@ -13,10 +13,9 @@
 /*                 DEFINES                    */
 ////////////////////////////////////////////////
 #define F_CPU 16000000UL
-#define MODES 3
+
 #define NUMMUX 8
 #define CHANNELS 4
-#define TOLLERENCE 10
 
 ////////////////////////////////////////////////
 /*               Global Vars.                 */
@@ -25,7 +24,6 @@
 volatile int ADCArr[3 + NUMMUX];
 volatile int changeArr[3 + NUMMUX];
 volatile int adcInx = 0;
-volatile int muxInx = 0;
 volatile int muxArrInx = 0;
 volatile int buttonPressed = 0;
 volatile char* buttonString;
@@ -112,10 +110,6 @@ void ADC_Init(volatile char* string) {
     ADCSRA |= (1 << ADIE); // ADC interrupt enable
     ADCSRA |= (1 << ADSC); // START ADC
 	
-	for (int i = 0; i < (3 + (BLOCKSIZE * MODES)); i++) {
-		// initialize to 1: valid input; 0: invalid input
-		changeArr[i] = 1;
-	}
 }
 
 ////////// ADC ISR //////////
@@ -125,29 +119,22 @@ ISR(ADC_vect) {
     int newADC = ADC;
 	int arrInd = (CHANNELS + adcInx - 1) % CHANNELS;
     if (arrInd > 2) {
-        arrInd += muxArrInx;
-        muxArrInx = (muxArrInx + 1) % NUMMUX;
+	    arrInd += muxArrInx;
+		muxArrInx = (muxArrInx + 1) % NUMMUX;
     }
 	
-	             
-    ADMUX &= ~(0b111);						// Clear Channel select
-    
-    
-    if (muxInx == 0) {
-        adcInx = (adcInx + 1) % CHANNELS;		// Cycle to next ADC channel
-    }
+    ADCArr[arrInd] = newADC;                 // Take in ADC value for Channel (ADC has value for previous channel)
+    ADMUX &= ~(0b111);              // Clear Channel select
+    adcInx = (adcInx + 1) % 4;      // Cycle to next ADC channel
+  
 
-    if (adcInx == 3) {
-        muxInx = (muxInx + 1) % NUMMUX;
-    }
+    PORTB &= ~(1 << PORTB4);
+    PORTD &= ~(1 << PORTD3);
+    PORTD &= ~(1 << PORTD2);
 
-    PORTD &= ~(1 << PORTD4);
-    PORTB &= ~(1 << PORTB3);
-    PORTB &= ~(1 << PORTB2);
-
-    PORTD |= (adcInx & 0b100) << PORTD4;
-    PORTB |= (adcInx & 0b010) << PORTB3;
-    PORTB |= (adcInx & 0b001) << PORTB2;
+    PORTB |= (muxArrInx & 0b100) << PORTB4;
+    PORTD |= (muxArrInx & 0b010) << PORTD3;
+    PORTD |= (muxArrInx & 0b001) << PORTD2;
  
 
     ADMUX |= adcInx;						// Change channel to next 
