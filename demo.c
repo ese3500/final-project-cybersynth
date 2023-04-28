@@ -18,8 +18,8 @@
 #define MODES 3
 #define BLOCKSIZE 3
 
-extern volatile int ADCArr[3 + 8];
-extern volatile int buttonMode;
+extern volatile int ADCArr[11];
+extern volatile int muxArrInx;
 char Values[150];
 volatile char SelectMode[50];
 
@@ -28,7 +28,7 @@ void Initialize() {
 
 	UART_init(BAUD_PRESCALER);
     ADC_Init(SelectMode);
-	
+	/*
 	// Buzzer Init
 	DDRD |= (1 << DDD5); // PIN 5 OUT
 	PORTD &= ~(1 << PORTD5); // PIN 5 LOW
@@ -48,6 +48,8 @@ void Initialize() {
 	
 	// set output compare value
 	OCR0A = 70;
+	
+	*/
 	/*
 	// PWM/Buzzer Timer1
 	DDRB |= (1 << DDB2); // Set Pin 10 out
@@ -78,28 +80,27 @@ void Initialize() {
 	TIFR1 |= (1 << OCF1A);
 
 */
+	
+	/*
 	lcd_init();
 	LCD_setScreen(BLACK);
-	
+	*/
 	sei();
 }
 
 
 int main(void) {
     Initialize();
-	int chX = 3;
-	int chY = 4;
-	int chZ = 5;
-	int prev = buttonMode;
 
     while(1) {
+		/*
 		// set buzzer pitch/volume
 		OCR0A = .1 * ADCArr[0];
 		OCR0B = OCR0A * (ADCArr[2] / 1023.0) / 4;
 		
 		// PWM LED brightness
 		OCR1B = OCR1A * (ADCArr[1] / 1023.0);
-
+*/
 /*
 		if (prev != buttonMode) {
 			prev = buttonMode;
@@ -111,7 +112,7 @@ int main(void) {
 		chY = 4 + (BLOCKSIZE * buttonMode);
 		chZ = 5 + (BLOCKSIZE * buttonMode);
 		*/
-        sprintf(Values, "CH0: %d, CH1: %d, CH2: %d, CH3: %d, CH4: %d, CH5: %d, CH6: %d, CH7: %d, CH8: %d, CH9: %d, CH10: %d\n", ADCArr[0], ADCArr[1], ADCArr[2], ADCArr[3], ADCArr[4], ADCArr[5], ADCArr[6], ADCArr[7], ADCArr[8], ADCArr[9], ADCArr[10]);
+        sprintf(Values, "CH0: %d, CH1: %d, CH2: %d, CH3: %d, CH4: %d, CH5: %d, CH6: %d, CH7: %d, CH8: %d, CH9: %d, CH10: %d, muxArrInx:%d\n", ADCArr[0], ADCArr[1], ADCArr[2], ADCArr[3], ADCArr[4], ADCArr[5], ADCArr[6], ADCArr[7], ADCArr[8], ADCArr[9], ADCArr[10], muxArrInx);
         UART_putstring(Values);
     }
 }
