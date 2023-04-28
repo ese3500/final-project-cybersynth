@@ -18,7 +18,7 @@
 #define MODES 3
 #define BLOCKSIZE 3
 
-extern volatile int ADCArr[3 + BLOCKSIZE + MODES];
+extern volatile int ADCArr[3 + 8];
 extern volatile int buttonMode;
 char Values[150];
 volatile char SelectMode[50];
@@ -100,16 +100,18 @@ int main(void) {
 		// PWM LED brightness
 		OCR1B = OCR1A * (ADCArr[1] / 1023.0);
 
+/*
 		if (prev != buttonMode) {
 			prev = buttonMode;
 			LCD_drawString(0, 0, SelectMode, WHITE, BLACK);
 		}
+		*/
 		/*
 		chX = 3 + (BLOCKSIZE * buttonMode);
 		chY = 4 + (BLOCKSIZE * buttonMode);
 		chZ = 5 + (BLOCKSIZE * buttonMode);
 		*/
-        sprintf(Values, "CH0: %d, CH1: %d, CH2: %d, CH3: %d, CH4: %d, CH5: %d, CH6: %d, CH7: %d, CH8: %d, CH9: %d, CH10: %d, CH11: %d\n", ADCArr[0], ADCArr[1], ADCArr[2], ADCArr[3], ADCArr[4], ADCArr[5], ADCArr[6], ADCArr[7], ADCArr[8], ADCArr[9], ADCArr[10], ADCArr[11]);
+        sprintf(Values, "CH0: %d, CH1: %d, CH2: %d, CH3: %d, CH4: %d, CH5: %d, CH6: %d, CH7: %d, CH8: %d, CH9: %d, CH10: %d\n", ADCArr[0], ADCArr[1], ADCArr[2], ADCArr[3], ADCArr[4], ADCArr[5], ADCArr[6], ADCArr[7], ADCArr[8], ADCArr[9], ADCArr[10]);
         UART_putstring(Values);
     }
 }
