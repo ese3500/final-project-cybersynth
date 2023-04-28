@@ -14,18 +14,19 @@
 ////////////////////////////////////////////////
 #define F_CPU 16000000UL
 #define MODES 3
-#define BLOCKSIZE 3
-#define CHANNELS 6
+#define NUMMUX 8
+#define CHANNELS 4
 #define TOLLERENCE 10
 
 ////////////////////////////////////////////////
 /*               Global Vars.                 */
 ////////////////////////////////////////////////
 // extern volatile int ADCArr[3 + (BLOCKSIZE * MODES)]; // gets this array in another .c file
-volatile int ADCArr[3 + (BLOCKSIZE * MODES)];
-volatile int changeArr[3 + (BLOCKSIZE * MODES)];
+volatile int ADCArr[3 + NUMMUX];
+volatile int changeArr[3 + NUMMUX];
 volatile int adcInx = 0;
-volatile int buttonMode = 0;
+volatile int muxInx = 0;
+volatile int muxArrInx = 0;
 volatile int buttonPressed = 0;
 volatile char* buttonString;
 
@@ -35,16 +36,21 @@ volatile char* buttonString;
 
 ////////// ATMega Initialize //////////
 void ADC_Init(volatile char* string) {
-    /////////// MODE SWITCHER ///////////
-    DDRB &= ~(1 << DDB4); // set pin 12 IN
+    
 
     buttonString = string;
 
+    // setup mux pins
+    DDRB |= (1 << DDB4); // set pin 12 OUT
+    DDRD |= (1 << DDD3); // set pin 3 OUT
+    DDRD |= (1 << DDD2); // set pin 2 OUT
+
+/*
     // enable button press
 	PCMSK0 |= (1 << PCINT4);
 	PCICR |= (1 << PCIE0);
 	PCIFR |= (1 << PCIF0);
-
+*/
 
     /////////////////////////////////
     /* 
@@ -119,30 +125,37 @@ ISR(ADC_vect) {
     int newADC = ADC;
 	int arrInd = (CHANNELS + adcInx - 1) % CHANNELS;
     if (arrInd > 2) {
-        arrInd += BLOCKSIZE * buttonMode;
-		
-		int prevCh = 3 + (((MODES * BLOCKSIZE) + (arrInd - 3) - BLOCKSIZE) % (MODES * BLOCKSIZE));
-		if (!changeArr[arrInd]) {
-			int dV = newADC - ADCArr[prevCh];
-			// if new inputs have moved more than TOLLERENCE the data is now valid
-			if (dV < -TOLLERENCE || dV > TOLLERENCE) {
-				changeArr[arrInd] = 1;
-			}
-		}
+        arrInd += muxArrInx;
+        muxArrInx = (muxArrInx + 1) % NUMMUX;
     }
 	
-	
-	// Take in ADC value for Channel (ADC has value for previous channel) if data valid
-	if (changeArr[arrInd]) {
-		ADCArr[arrInd] = newADC;
-	}                 
+	             
     ADMUX &= ~(0b111);						// Clear Channel select
-    adcInx = (adcInx + 1) % CHANNELS;		// Cycle to next ADC channel
+    
+    
+    if (muxInx == 0) {
+        adcInx = (adcInx + 1) % CHANNELS;		// Cycle to next ADC channel
+    }
+
+    if (adcInx == 3) {
+        muxInx = (muxInx + 1) % NUMMUX;
+    }
+
+    PORTD &= ~(1 << PORTD4);
+    PORTB &= ~(1 << PORTB3);
+    PORTB &= ~(1 << PORTB2);
+
+    PORTD |= (adcInx & 0b100) << PORTD4;
+    PORTB |= (adcInx & 0b010) << PORTB3;
+    PORTB |= (adcInx & 0b001) << PORTB2;
+ 
+
     ADMUX |= adcInx;						// Change channel to next 
 	
 	sei();
 }
 
+/*
 ////////// Button Press ISR //////////
 ISR(PCINT0_vect) {
 	cli();
@@ -159,3 +172,4 @@ ISR(PCINT0_vect) {
 	
 	sei();
 }
+*/
