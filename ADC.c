@@ -23,7 +23,7 @@
 // extern volatile int ADCArr[3 + (BLOCKSIZE * MODES)]; // gets this array in another .c file
 volatile int ADCArr[3 + NUMMUX];
 volatile int changeArr[3 + NUMMUX];
-volatile int adcInx = 0;
+volatile int adcInx = 1;
 volatile int muxArrInx = 0;
 volatile int buttonPressed = 0;
 volatile char* buttonString;
@@ -120,7 +120,8 @@ ISR(ADC_vect) {
 	int arrInd = (CHANNELS + adcInx - 1) % CHANNELS;
     if (arrInd > 2) {
 	    arrInd += muxArrInx;
-		muxArrInx = (muxArrInx + 1) % NUMMUX;
+		//muxArrInx = (muxArrInx + 1) % NUMMUX;
+        muxArrInx = (muxArrInx + 1) % 2;
     }
 	
     ADCArr[arrInd] = newADC;                 // Take in ADC value for Channel (ADC has value for previous channel)
@@ -132,9 +133,12 @@ ISR(ADC_vect) {
     PORTD &= ~(1 << PORTD3);
     PORTD &= ~(1 << PORTD2);
 
+    
+
     PORTB |= (muxArrInx & 0b100) << PORTB4;
     PORTD |= (muxArrInx & 0b010) << PORTD3;
     PORTD |= (muxArrInx & 0b001) << PORTD2;
+    
  
 
     ADMUX |= adcInx;						// Change channel to next 
