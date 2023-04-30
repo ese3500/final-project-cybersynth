@@ -120,8 +120,7 @@ ISR(ADC_vect) {
 	int arrInd = (CHANNELS + adcInx - 1) % CHANNELS;
     if (arrInd > 2) {
 	    arrInd += muxArrInx;
-		//muxArrInx = (muxArrInx + 1) % NUMMUX;
-        muxArrInx = (muxArrInx + 1) % 2;
+	    muxArrInx = (muxArrInx + 1) % NUMMUX;
     }
 	
     ADCArr[arrInd] = newADC;                 // Take in ADC value for Channel (ADC has value for previous channel)
@@ -135,8 +134,8 @@ ISR(ADC_vect) {
 
     
 
-    PORTB |= (muxArrInx & 0b100) << PORTB4;
-    PORTD |= (muxArrInx & 0b010) << PORTD3;
+    PORTB |= ((muxArrInx & 0b100) >> 2) << PORTB4;
+    PORTD |= ((muxArrInx & 0b010) >> 1) << PORTD3;
     PORTD |= (muxArrInx & 0b001) << PORTD2;
     
  
