@@ -95,7 +95,7 @@ void writeNote(char* note) {
 void writePots() {
 	char Str[16];
 	for (int i = 0; i < 8; i++) {
-		int val = (int) ((ADCArr[i + 3] / 1024.0) * 10);
+		int val = (int) ((ADCArr[i + 3] / 1023.0) * 11);
 		sprintf(Str, "Knob %d: %d", i, val);
 		LCD_drawString(0, 40 + (9 * i), Str, WHITE, BLACK, 0);
 	}
@@ -104,7 +104,7 @@ void writePots() {
 void writeForce() {
 	char Str[] = "Force: ";
 	LCD_drawString(0, 100, Str, WHITE, BLACK, 0);
-	int val = (int) ((ADCArr[1] / 1024.0) * 100);
+	int val = (int) ((ADCArr[1] / 1023.0) * 100);
 	LCD_drawBlock(50, 100, 50 + val, 110, WHITE);
 	LCD_drawBlock(50 + val + 1, 100, 100, 110, BLACK);
 }
