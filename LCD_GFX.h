@@ -7,6 +7,7 @@
 
 #include <avr/io.h>
 #include "ASCII_LUT.h"
+#include "ASCII_LUT2.h"
 
 #ifndef LCD_GFX_H_
 #define LCD_GFX_H_
@@ -23,10 +24,10 @@
 
 uint16_t rgb565(uint8_t red, uint8_t green, uint8_t blue);
 void LCD_drawPixel(uint8_t x, uint8_t y, uint16_t color);
-void LCD_drawChar(uint8_t x, uint8_t y, uint16_t character, uint16_t fColor, uint16_t bColor);
+void LCD_drawChar(uint8_t x, uint8_t y, uint16_t character, uint16_t fColor, uint16_t bColor, int big);
 void LCD_drawCircle(uint8_t x0, uint8_t y0, uint8_t radius,uint16_t color);
 void LCD_drawLine(short x0,short y0,short x1,short y1,uint16_t c);
 void LCD_drawBlock(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1,uint16_t color);
 void LCD_setScreen(uint16_t color);
-void LCD_drawString(uint8_t x, uint8_t y, char* str, uint16_t fg, uint16_t bg);
+void LCD_drawString(uint8_t x, uint8_t y, char* str, uint16_t fg, uint16_t bg, int big);
 #endif /* LCD_GFX_H_ */

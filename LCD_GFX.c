@@ -43,18 +43,75 @@ void LCD_drawPixel(uint8_t x, uint8_t y, uint16_t color) {
 * @brief		Draw a character starting at the point with foreground and background colors
 * @note
 *****************************************************************************/
-void LCD_drawChar(uint8_t x, uint8_t y, uint16_t character, uint16_t fColor, uint16_t bColor){
-	uint16_t row = character - 0x20;		//Determine row of ASCII table starting at space
-	int i, j;
-	if ((LCD_WIDTH-x>7)&&(LCD_HEIGHT-y>7)){
-		for(i=0;i<5;i++){
-			uint8_t pixels = ASCII[row][i]; //Go through the list of pixels
-			for(j=0;j<8;j++){
-				if ((pixels>>j)&1==1){
-					LCD_drawPixel(x+i,y+j,fColor);
+void LCD_drawChar(uint8_t x, uint8_t y, uint16_t character, uint16_t fColor, uint16_t bColor, int big){
+	if (big) {
+		uint16_t row;
+		switch (character) {
+			case 0x20:
+				row = 0;
+				break;
+			case 0x23:
+				row = 1;
+				break;
+			case 0x62:
+				row = 2;
+				break;
+			case 0x2f:
+				row = 3;
+				break;
+			case 0x41:
+				row = 4;
+				break;
+			case 0x42:
+				row = 5;
+				break;
+			case 0x43:
+				row = 6;
+				break;
+			case 0x44:
+				row = 7;
+				break;
+			case 0x45:
+				row = 8;
+				break;
+			case 0x46:
+				row = 9;
+				break;
+			case 0x47:
+				row = 10;
+				break;
+			default:
+				row = 0;
+				break;
+		}
+
+		if ((LCD_WIDTH-x>10)&&(LCD_HEIGHT-y>11)) {
+			for (int i = 0; i < 11; i++) {
+				uint16_t pixels = ASCII2[row][i];
+				for (int j = 0; j < 10; j++) {
+					if ((pixels>>j)&1==1){
+						LCD_drawPixel(x+i,y+9-j,fColor);
+					}
+					else {
+						LCD_drawPixel(x+i,y+9-j,bColor);
+					}
 				}
-				else {
-					LCD_drawPixel(x+i,y+j,bColor);
+			}
+		}
+
+	} else {
+		uint16_t row = character - 0x20;		//Determine row of ASCII table starting at space
+		int i, j;
+		if ((LCD_WIDTH-x>7)&&(LCD_HEIGHT-y>7)){
+			for(i=0;i<5;i++){
+				uint8_t pixels = ASCII[row][i]; //Go through the list of pixels
+				for(j=0;j<8;j++){
+					if ((pixels>>j)&1==1){
+						LCD_drawPixel(x+i,y+j,fColor);
+					}
+					else {
+						LCD_drawPixel(x+i,y+j,bColor);
+					}
 				}
 			}
 		}
@@ -246,11 +303,11 @@ void LCD_setScreen(uint16_t color)
 * @brief		Draw a string starting at the point with foreground and background colors
 * @note
 *****************************************************************************/
-void LCD_drawString(uint8_t x, uint8_t y, char* str, uint16_t fg, uint16_t bg)
+void LCD_drawString(uint8_t x, uint8_t y, char* str, uint16_t fg, uint16_t bg, int big)
 {
 	while(*str != '\0') {
-		LCD_drawChar(x, y, *str, fg, bg);
-		x += 6;
+		LCD_drawChar(x, y, *str, fg, bg, big);
+		x += big ? 11 : 6;
 		str++;
 	}
 }

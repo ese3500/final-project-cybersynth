@@ -75,7 +75,7 @@ void debug(){
 	UART_putstring(val);
 }
 
-void setNote(char* note) {
+void writeNote(char* note) {
 	LCD_drawBlock(0, 20, LCD_WIDTH - 1, 26, BLACK);
 	if (NOTE_ON) {
 		char noteStr[10];
@@ -89,7 +89,24 @@ void setNote(char* note) {
 		sprintf(Note, "X");
 	}
 	
-	LCD_drawString(0, 20, Note, WHITE, BLACK);
+	LCD_drawString(0, 20, Note, WHITE, BLACK, 1);
+}
+
+void writePots() {
+	char Str[16];
+	for (int i = 0; i < 8; i++) {
+		int val = (int) ((ADCArr[i + 3] / 1024.0) * 10);
+		sprintf(Str, "Knob %d: %d", i, val);
+		LCD_drawString(0, 40 + (9 * i), Str, WHITE, BLACK, 0);
+	}
+}
+
+void writeForce() {
+	char Str[] = "Force: ";
+	LCD_drawString(0, 100, Str, WHITE, BLACK, 0);
+	int val = (int) ((ADCArr[1] / 1024.0) * 100);
+	LCD_drawBlock(50, 100, 50 + val, 110, WHITE);
+	LCD_drawBlock(50 + val + 1, 100, 100, 110, BLACK);
 }
 
 /*
@@ -154,14 +171,14 @@ int main(void)
 			curr_note = processNote(); //remove temp if not necessary
 			noteOn(CHANNEL, curr_note, 60); //Send command
 			CMD1_SENT = 1;
-			setNote(Note);
+			writeNote(Note);
 		} else if (NOTE_ON && CMD1_SENT){
 			int new_note = processNote();
 			if(new_note != curr_note){ //detects slide (i.e. new note being played while force is still being pressed
 				noteOff(CHANNEL, curr_note);
 				noteOn(CHANNEL, new_note, 60);
 				curr_note = new_note;
-				setNote(Note);
+				writeNote(Note);
 			} else {
 				CMD2_SENT = 0; //CMD2 (noteOff) needs to be sent
 			}
@@ -171,8 +188,11 @@ int main(void)
 			noteOff(CHANNEL, curr_note);
 			CMD1_SENT = 0; //CMD1 (noteOn) now needs to be sent (next note(
 			CMD2_SENT = 1;
-			setNote(Note);
+			writeNote(Note);
 		}
+
+		writePots();
+		writeForce();
 		
 		
 		//sendPolyPressure();
