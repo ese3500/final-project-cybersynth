@@ -97,20 +97,21 @@ void writeNote(char* note) {
 }
 
 void writePots() {
-	char Str[16];
+	char Str[4];
 	for (int i = 0; i < 8; i++) {
-		int val = (int) ((ADCArr[i + 3] / 1023.0) * 12);
-		if (val != prevKnobs[i]) {
-			sprintf(Str, "Knob %d: %d ", i, val);
-			LCD_drawString(0, 40 + (9 * i), Str, WHITE, BLACK, 0);
-			prevKnobs[i] = val;
+		const int knob = ADCArr[i + 3];
+		int val = (int) ((knob / 1023.0) * 12);
+		if (knob >= prevKnobs[i] + 10 || knob <= prevKnobs[i] - 10) {
+			sprintf(Str, "%d ", val);
+			LCD_drawString(45, 40 + (9 * i), Str, WHITE, BLACK, 0);
+			prevKnobs[i] = knob;
 		}
 	}
 }
 
 void writeForce() {
 	int val = (int) ((ADCArr[1] / 1023.0) * 100);
-	if (val != prevForce) {
+	if (val >= prevForce + 2 || val <= prevForce - 2) {
 		LCD_drawBlock(50, 115, 50 + val, 125, WHITE);
 		LCD_drawBlock(50 + val, 115, 150, 125, BLACK);
 		prevForce = val;
@@ -129,8 +130,12 @@ void initialize() {
 	
 	lcd_init();
 	
-	
+	char Str[10];
 	LCD_setScreen(BLACK);
+	for (int i = 0; i < 8; i++) {
+		sprintf(Str, "Knob %d: ", i);
+		LCD_drawString(0, 40 + (9 * i), Str, WHITE, BLACK, 0);
+	}
 	
 	LCD_drawString(0, 115, "Force: ", WHITE, BLACK, 0);
 	
