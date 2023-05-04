@@ -80,6 +80,24 @@ void LCD_drawChar(uint8_t x, uint8_t y, uint16_t character, uint16_t fColor, uin
 			case 0x47:
 				row = 10;
 				break;
+			case 0x30:
+				row = 11;
+				break;
+			case 0x31:
+				row = 12;
+				break;
+			case 0x302:
+				row = 13;
+				break;
+			case 0x33:
+				row = 14;
+				break;
+			case 0x34:
+				row = 15;
+				break;
+			case 0x35:
+				row = 16;
+				break;
 			default:
 				row = 0;
 				break;
