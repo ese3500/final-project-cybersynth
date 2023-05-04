@@ -48,6 +48,9 @@ int CMD2_SENT = 1; //noteOff
 int octave = 3; //Default C3
 int key_discrete = 0; //Ranges from 0-11 inclusive | 0 -> C maj, 11 -> B maj
 
+int prevKnobs[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+int prevForce = 0;
+
 
 int quantize_scale_flag = 0; //Flag that keeps track of quantized scale mode or "continuous" mode
 
@@ -75,8 +78,9 @@ void debug(){
 	UART_putstring(val);
 }
 
+
 void writeNote(char* note) {
-	LCD_drawBlock(0, 20, LCD_WIDTH - 1, 26, BLACK);
+	LCD_drawBlock(0, 20, 50, 30, BLACK);
 	if (NOTE_ON) {
 		char noteStr[10];
 		char octStr[3];
@@ -86,7 +90,7 @@ void writeNote(char* note) {
 		strcat(noteStr, itoa(noteOctave, octStr, 10));
 		sprintf(Note, "%s", noteStr);
 	} else {
-		sprintf(Note, "X");
+		sprintf(Note, " ");
 	}
 	
 	LCD_drawString(0, 20, Note, WHITE, BLACK, 1);
@@ -95,19 +99,25 @@ void writeNote(char* note) {
 void writePots() {
 	char Str[16];
 	for (int i = 0; i < 8; i++) {
-		int val = (int) ((ADCArr[i + 3] / 1023.0) * 11);
-		sprintf(Str, "Knob %d: %d", i, val);
-		LCD_drawString(0, 40 + (9 * i), Str, WHITE, BLACK, 0);
+		int val = (int) ((ADCArr[i + 3] / 1023.0) * 12);
+		if (val != prevKnobs[i]) {
+			sprintf(Str, "Knob %d: %d ", i, val);
+			LCD_drawString(0, 40 + (9 * i), Str, WHITE, BLACK, 0);
+			prevKnobs[i] = val;
+		}
 	}
 }
 
 void writeForce() {
-	char Str[] = "Force: ";
-	LCD_drawString(0, 100, Str, WHITE, BLACK, 0);
 	int val = (int) ((ADCArr[1] / 1023.0) * 100);
-	LCD_drawBlock(50, 100, 50 + val, 110, WHITE);
-	LCD_drawBlock(50 + val + 1, 100, 100, 110, BLACK);
+	if (val != prevForce) {
+		LCD_drawBlock(50, 115, 50 + val, 125, WHITE);
+		LCD_drawBlock(50 + val, 115, 150, 125, BLACK);
+		prevForce = val;
+	}
 }
+
+
 
 /*
 	Initialize function
@@ -118,16 +128,20 @@ void initialize() {
 	ADC_Init(SelectMode);
 	
 	lcd_init();
+	
+	
 	LCD_setScreen(BLACK);
 	
-	//CONFIGURE TIMEERS/PINS HERE
+	LCD_drawString(0, 115, "Force: ", WHITE, BLACK, 0);
+	
+	
 	sei();
 	
 }
 /*
 	Reads and sets the values corresponding to the SoftPot and FSR
 */
-void readAnalaog(){
+void readAnalaog() {
 	SP_analog = ADCArr[0];
 	FSR_analog = ADCArr[1];
 }
@@ -154,7 +168,6 @@ void sendPolyPressure(){
 int main(void)
 {
     initialize();
-	
 	
     while (1) 
     {
@@ -196,10 +209,6 @@ int main(void)
 		
 		
 		//sendPolyPressure();
-		
-		
-		
-		
     }
 }
 
