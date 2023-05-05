@@ -21,6 +21,8 @@
 #include "ADC.h"
 #include "MIDI.h"
 
+
+int color;
 int SP_analog;
 int FSR_analog;
 int pot_scale;
@@ -63,18 +65,18 @@ char* octave[] = {
 
 //----------------------------LCD FUNCTIONS--------------------------------------//
 void writeNote(int note) {
-	LCD_drawBlock(0, 20, 50, 30, BLACK);
+	LCD_drawBlock(0, 20, 70, 30, color);
 
 	if(FSR_analog >  8){
 		char noteStr[10];
 		char octStr[3];
-		int noteLetter = curr_note % 12;
+		int noteLetter = curr_note % 12 + 1;
 		int noteOctave = (curr_note / 12) - 2;
 		strcpy(noteStr, notes[noteLetter]);
 		strcat(noteStr, itoa(noteOctave, octStr, 10));
 		sprintf(Note, "%s", noteStr);
 		
-		LCD_drawString(5, 20, Note, WHITE, BLACK, 0);
+		LCD_drawString(5, 20, Note, MAGENTA, color, 1);
 	}
 	
 }
@@ -82,16 +84,20 @@ void writeNote(int note) {
 void writeForce() {
 	int val = FSR_analog * 30 / 60;
 	if (val >= prevForce + 2 || val <= prevForce - 2) {
-		LCD_drawBlock(5, 110 - val, 15, 110, WHITE);
-		LCD_drawBlock(5, 30, 15, 110-val, BLACK);
+		LCD_drawBlock(5, 110 - val, 15, 110, MAGENTA);
+		LCD_drawBlock(5, 30, 15, 110-val, color);
 		prevForce = val;
 	}
 }
 
 void drawGraphic(){
-	LCD_drawCircle(60, 60, 25, MAGENTA);
-	LCD_drawBlock(35, 60, 95, 63, BLUE);
-	LCD_drawBlock(35, 65, 95, 67, BLUE);
+	LCD_drawCircle(90, 60, 25, MAGENTA);
+	LCD_drawBlock(90-25, 60, 90+25, 63, color);
+	LCD_drawBlock(90-25, 66, 90+25, 68, color);
+	LCD_drawBlock(90-25, 71, 90+25, 73, color);
+	LCD_drawBlock(90-25, 75, 90+25, 76, color);
+
+	LCD_drawString(40, 100, "CYBERSYNTH CONTROL", MAGENTA, color, 0);
 }
 //--------------------------------------------------------//
 
@@ -108,8 +114,8 @@ void initialize(){
 	TIMSK1 |= (1 << TOIE1);   // Enable timer1 overflow interrupt(TOIE1)
 	
 	lcd_init();
-	LCD_setScreen(BLACK);
-	LCD_drawString(7, 115, "F", WHITE, BLACK, 0);
+	LCD_setScreen(color);
+	LCD_drawString(7, 115, "F", MAGENTA, color, 0);
 	
 	sei();
 }
@@ -139,7 +145,9 @@ void debug(){
 
 int main(void)
 {
+	uint16_t color = rgb565(46, 33, 87);
 	initialize();
+	drawGraphic();
     /* Replace with your application code */
     while (1) 
     {
