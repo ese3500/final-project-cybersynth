@@ -1,0 +1,150 @@
+/*
+ * DISPLAY.c
+ *
+ * Created: 2023-05-04 4:59:09 PM
+ * Author : vicga
+ */ 
+#define F_CPU 16000000UL
+#define BAUD_RATE 9600 
+#define BAUD_PRESCALER (((F_CPU / (BAUD_RATE * 16UL)))-1)
+
+
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include <util/delay.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
+#include "ST7735.h"
+#include "LCD_GFX.h"
+#include "ADC.h"
+#include "MIDI.h"
+
+int SP_analog;
+int FSR_analog;
+int pot_scale;
+int pot_octave;
+
+int curr_scale[15] = {55, 57, 59, 60, 62, 64, 65, 67, 69, 71, 72, 74, 76, 77, 79}; //default scale is C major
+
+int prevNote = 0;
+int prevForce = 0;
+
+int curr_note = 60; //Current note from 0 - 127
+int curr_press = 0; //Current pressure from 0 - 127
+
+char debug_string[25];
+char Note[21];
+
+extern volatile int ADCArr[6];
+char* notes[] = {
+	"C",
+	"C#/Db",
+	"D",
+	"D#/Eb",
+	"E",
+	"F",
+	"F#/Gb",
+	"G",
+	"G#/Fb",
+	"A",
+	"A#/Bb",
+	"B"
+};
+char* octave[] = {
+	"1",
+	"2",
+	"3",
+	"4",
+	"5"
+};
+
+
+//----------------------------LCD FUNCTIONS--------------------------------------//
+void writeNote(int note) {
+	LCD_drawBlock(0, 20, 50, 30, BLACK);
+
+	if(FSR_analog >  8){
+		char noteStr[10];
+		char octStr[3];
+		int noteLetter = curr_note % 12;
+		int noteOctave = (curr_note / 12) - 2;
+		strcpy(noteStr, notes[noteLetter]);
+		strcat(noteStr, itoa(noteOctave, octStr, 10));
+		sprintf(Note, "%s", noteStr);
+		
+		LCD_drawString(5, 20, Note, WHITE, BLACK, 0);
+	}
+	
+}
+
+void writeForce() {
+	int val = FSR_analog * 30 / 60;
+	if (val >= prevForce + 2 || val <= prevForce - 2) {
+		LCD_drawBlock(5, 110 - val, 15, 110, WHITE);
+		LCD_drawBlock(5, 30, 15, 110-val, BLACK);
+		prevForce = val;
+	}
+}
+
+void drawGraphic(){
+	LCD_drawCircle(60, 60, 25, MAGENTA);
+	LCD_drawBlock(35, 60, 95, 63, BLUE);
+	LCD_drawBlock(35, 65, 95, 67, BLUE);
+}
+//--------------------------------------------------------//
+
+void initialize(){
+	cli();
+	UART_init(BAUD_PRESCALER);
+	ADC_Init();
+	
+	//Timer1 Setup - prescale of 64 (1 full cycle ~= 0.25s), each overflow will serve as a frame update (FPS = 4)
+	TCCR1B |= (1<<CS10);
+	TCCR1B |= (1<<CS11);
+	TCCR1B &=~(1<<CS12);
+	
+	TIMSK1 |= (1 << TOIE1);   // Enable timer1 overflow interrupt(TOIE1)
+	
+	lcd_init();
+	LCD_setScreen(BLACK);
+	LCD_drawString(7, 115, "F", WHITE, BLACK, 0);
+	
+	sei();
+}
+
+
+ISR(TIMER1_OVF_vect){
+	//if note last displayed not equal to the note currently being played, UPDATE SCREEN
+	if(prevNote != curr_note){
+		writeNote(curr_note);
+		prevNote = curr_note;
+	}
+	writeForce();
+}
+
+void readAnalog(){
+	SP_analog = ADCArr[0] * 15 / 1023;
+	FSR_analog = ADCArr[1];
+	pot_scale = ADCArr[2] * 12 / 1023;
+	pot_octave = (ADCArr[3] * 5 / 1023 -2);
+	curr_note = curr_scale[SP_analog] + pot_scale + pot_octave * 12;
+}
+
+void debug(){
+	sprintf(debug_string, "curr_note: %d, CH0: %d, CH1: %d, CH2: %d, CH3: %d\n", curr_note, ADCArr[0], ADCArr[1], ADCArr[2], ADCArr[3]);
+	UART_putstring(debug_string);
+}
+
+int main(void)
+{
+	initialize();
+    /* Replace with your application code */
+    while (1) 
+    {
+		//debug();
+		readAnalog();
+    }
+}
+
